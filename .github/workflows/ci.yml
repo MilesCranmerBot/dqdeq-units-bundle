@@ -19,5 +19,5 @@ jobs:
       - name: Instantiate
         run: julia --project=. -e 'import Pkg; Pkg.instantiate()'
 
-      - name: Run unitful ODE tests
+      - name: Run tests
         run: julia --project=. test/runtests.jl

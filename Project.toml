@@ -3,6 +3,7 @@ uuid = "d2bf23e5-2ce4-4736-a883-7ed2cc20659d"
 version = "0.0.0"
 
 [deps]
+ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
 DynamicQuantities = "06fc5a27-2a28-4c7c-a15d-362465fb6821"
 DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
 OrdinaryDiffEqCore = "bbf590c4-e513-4bbe-9b18-05decba2e5d8"
@@ -11,8 +12,16 @@ DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 
 [sources]
+ArrayInterface = { path = "ArrayInterface" }
 DynamicQuantities = { path = "DynamicQuantities" }
 DiffEqBase = { path = "DiffEqBase" }
 OrdinaryDiffEqCore = { path = "OrdinaryDiffEqCore" }
 OrdinaryDiffEqDifferentiation = { path = "OrdinaryDiffEqDifferentiation" }
 DifferentiationInterface = { path = "DifferentiationInterface" }
+
+[extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test", "Aqua"]
