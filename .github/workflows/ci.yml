@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  pkgtest:
+    name: Pkg.test(${{ matrix.pkg }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg:
+          - ArrayInterface
+          - DynamicQuantities
+          - DiffEqBase
+          - DifferentiationInterface
+          - OrdinaryDiffEqCore
+          - OrdinaryDiffEqDifferentiation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+
+      - uses: julia-actions/cache@v2
+
+      - name: Run Pkg.test
+        shell: bash
+        run: |
+          julia -e '
+            import Pkg
+            Pkg.activate(mktempdir())
+
+            # Prefer local vendored copies when present (PR branch / merge commit).
+            for p in [
+              "ArrayInterface",
+              "DynamicQuantities",
+              "DiffEqBase",
+              "DifferentiationInterface",
+              "OrdinaryDiffEqCore",
+              "OrdinaryDiffEqDifferentiation",
+            ]
+              isdir(p) && Pkg.develop(path=p)
+            end
+
+            Pkg.test("${{ matrix.pkg }}"; coverage=false)
+          '
+
+  integration:
+    name: Bundle integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+
+      - uses: julia-actions/cache@v2
+
+      - name: Run integration test file (if present)
+        shell: bash
+        run: |
+          if [[ -f Project.toml && -f test/runtests.jl ]]; then
+            julia --project=. -e 'import Pkg; Pkg.instantiate()'
+            julia --project=. test/runtests.jl
+          else
+            echo "No root Project.toml + test/runtests.jl found; skipping integration job."
+          fi
