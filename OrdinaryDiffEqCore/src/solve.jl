@@ -278,7 +278,7 @@ function SciMLBase.__init(
                 real(
                     convert(
                         uBottomEltype,
-                        oneunit(uBottomEltype) *
+                        one(uBottomEltype) *
                             1 // 10^6
                     )
                 )
@@ -298,7 +298,7 @@ function SciMLBase.__init(
                 real(
                     convert(
                         uBottomEltype,
-                        oneunit(uBottomEltype) * 1 // 10^3
+                        one(uBottomEltype) * 1 // 10^3
                     )
                 )
             )
@@ -322,7 +322,7 @@ function SciMLBase.__init(
                 eltype(u) <: Enum
             rate_prototype = u
         else # has units!
-            rate_prototype = u / oneunit(tType)
+            rate_prototype = u / one(tType)
         end
     end
     rateType = typeof(rate_prototype) ## Can be different if united
@@ -628,7 +628,7 @@ function SciMLBase.__init(
     kshortsize = 0
     reeval_fsal = false
     u_modified = false
-    EEst = oneunit(EEstT) # https://github.com/JuliaPhysics/Measurements.jl/pull/135
+    EEst = one(EEstT) # https://github.com/JuliaPhysics/Measurements.jl/pull/135
     just_hit_tstop = false
     isout = false
     accept_step = false
@@ -639,7 +639,7 @@ function SciMLBase.__init(
     vector_event_last_time = 1
     last_event_error = prob isa SciMLBase.AbstractDiscreteProblem ? false :
         (
-            Base.isbitstype(uBottomEltypeNoUnits) ? zero(uBottomEltypeNoUnits) :
+            Base.isbitstype(uBottomEltypeNoUnits) ? zero(one(uBottomEltypeNoUnits)) :
             0.0
         )
     dtchangeable = isdtchangeable(_alg)
