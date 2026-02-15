@@ -74,6 +74,8 @@ _as well as any other future abstract quantity types_,
 """
 abstract type AbstractGenericQuantity{T,D} end
 
+using DispatchDoctor: @unstable
+
 """
     AbstractRealQuantity{T,D} <: Real
 
@@ -92,14 +94,11 @@ as it will also include future abstract quantity types.
 """
 const UnionAbstractQuantity{T,D} = Union{AbstractQuantity{T,D},AbstractGenericQuantity{T,D},AbstractRealQuantity{T,D}}
 
-# Report the scalar value element type for quantity *types*.
-# (Some downstream code uses this to recover the stored numeric type.)
-Base.eltype(::Type{<:UnionAbstractQuantity{T}}) where {T} = T
-
-# But for quantity *values* (which are scalar Numbers), `eltype(x)` should behave like
-# it does for other numbers (e.g. eltype(1.0) == Float64): it should return the type
-# of the scalar itself. This keeps Julia broadcasting’s inferred result eltype correct.
-Base.eltype(x::UnionAbstractQuantity) = typeof(x)
+# Quantities act like scalar Numbers when their stored value is scalar, but can also
+# behave like collections when the stored value is array-like (see iterate/axes/etc
+# in utils.jl). Define `eltype` accordingly.
+Base.eltype(::Type{Q}) where {Q<:UnionAbstractQuantity} = Q
+Base.eltype(x::UnionAbstractQuantity) = eltype(typeof(x))
 
 """
     Dimensions{R<:Real} <: AbstractDimensions{R}
@@ -225,6 +224,12 @@ struct RealQuantity{T<:Real,D<:AbstractDimensions} <: AbstractRealQuantity{T,D}
     RealQuantity(x::_T, dimensions::_D) where {_T,_D<:AbstractDimensions} = new{_T,_D}(x, dimensions)
 end
 
+# If a quantity stores an array-like value, it behaves like a collection whose
+# element type is the corresponding scalar quantity.
+Base.eltype(::Type{Quantity{T,D}}) where {T<:AbstractArray, D} = Quantity{eltype(T), D}
+Base.eltype(::Type{GenericQuantity{T,D}}) where {T<:AbstractArray, D} = GenericQuantity{eltype(T), D}
+Base.eltype(::Type{RealQuantity{T,D}}) where {T<:AbstractArray, D} = RealQuantity{eltype(T), D}
+
 """
     ABSTRACT_QUANTITY_TYPES
 
@@ -303,7 +308,7 @@ function with_type_parameters(::Type{<:RealQuantity}, ::Type{T}, ::Type{D}) wher
 end
 
 # The following functions should be overloaded for special types
-function constructorof(::Type{T}) where {T<:Union{UnionAbstractQuantity,AbstractDimensions}}
+@unstable function constructorof(::Type{T}) where {T<:Union{UnionAbstractQuantity,AbstractDimensions}}
     return Base.typename(T).wrapper
 end
 function with_type_parameters(::Type{D}, ::Type{R}) where {D<:AbstractDimensions,R}
