@@ -92,6 +92,15 @@ as it will also include future abstract quantity types.
 """
 const UnionAbstractQuantity{T,D} = Union{AbstractQuantity{T,D},AbstractGenericQuantity{T,D},AbstractRealQuantity{T,D}}
 
+# Report the scalar value element type for quantity *types*.
+# (Some downstream code uses this to recover the stored numeric type.)
+Base.eltype(::Type{<:UnionAbstractQuantity{T}}) where {T} = T
+
+# But for quantity *values* (which are scalar Numbers), `eltype(x)` should behave like
+# it does for other numbers (e.g. eltype(1.0) == Float64): it should return the type
+# of the scalar itself. This keeps Julia broadcasting’s inferred result eltype correct.
+Base.eltype(x::UnionAbstractQuantity) = typeof(x)
+
 """
     Dimensions{R<:Real} <: AbstractDimensions{R}
 

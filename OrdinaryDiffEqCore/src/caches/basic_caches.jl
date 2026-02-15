@@ -8,7 +8,18 @@ ismutablecache(cache::OrdinaryDiffEqMutableCache) = true
 ismutablecache(cache::OrdinaryDiffEqConstantCache) = false
 
 # Don't worry about the potential alloc on a constant cache
-get_fsalfirstlast(cache::OrdinaryDiffEqConstantCache, u) = (zero(u), zero(u))
+# For runtime-unit quantities (DynamicQuantities), `zero(u::AbstractArray)` can
+# call `zero(::Type{eltype(u)})` which is intentionally undefined. Use a value-based
+# zero that preserves the units of the stored values.
+@inline _zero_like(u) = zero(u)
+@inline function _zero_like(u::AbstractArray)
+    isempty(u) && return similar(u)
+    z = zero(first(u))
+    out = similar(u)
+    fill!(out, z)
+    return out
+end
+get_fsalfirstlast(cache::OrdinaryDiffEqConstantCache, u) = (_zero_like(u), _zero_like(u))
 
 mutable struct CompositeCache{T, F} <: OrdinaryDiffEqCache
     caches::T

@@ -41,8 +41,10 @@ function SciMLBase.__init(
         calck = (callback !== nothing && callback !== CallbackSet()) ||
             (dense) || !isempty(saveat), # and no dense output
         dt = nothing,
-        dtmin = eltype(prob.tspan)(0),
-        dtmax = eltype(prob.tspan)((prob.tspan[end] - prob.tspan[1])),
+        # For runtime-unit quantities (DynamicQuantities), eltype(prob.tspan)(0) would
+        # drop units; use a value-based zero to preserve units.
+        dtmin = zero(prob.tspan[1]),
+        dtmax = (prob.tspan[end] - prob.tspan[1]),
         force_dtmin = false,
         adaptive = anyadaptive(alg),
         abstol = nothing,

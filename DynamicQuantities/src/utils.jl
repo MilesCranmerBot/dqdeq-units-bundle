@@ -293,6 +293,7 @@ end
 Base.iszero(d::AbstractDimensions) = all_dimensions(iszero, d)
 Base.iszero(::NoDims) = true
 Base.:(==)(l::AbstractDimensions, r::AbstractDimensions) = all_dimensions(==, l, r)
+Base.eps(q::Q) where {Q<:UnionAbstractQuantity} = new_quantity(Q, eps(ustrip(q)), dimension(q))
 
 
 # Base.one, typemin, typemax
@@ -313,6 +314,18 @@ Base.one(::D) where {D<:AbstractDimensions} = one(D)
 
 # Additive identities (zero). We have to invalidate these due to different behavior with conversion
 Base.zero(q::Q) where {Q<:UnionAbstractQuantity} = new_quantity(Q, zero(ustrip(q)), dimension(q))
+
+# For arrays of runtime-unit quantities, `Base.zero(x::AbstractArray)` falls back to
+# `zero(eltype(x))`, which is intentionally undefined for DynamicQuantities.
+# Define a value-based array zero that preserves units.
+function Base.zero(x::AbstractArray{<:UnionAbstractQuantity})
+    isempty(x) && return similar(x)
+    z = zero(first(x))
+    out = similar(x)
+    fill!(out, z)
+    return out
+end
+
 Base.zero(::AbstractDimensions) = error("There is no such thing as an additive identity for a `AbstractDimensions` object, as + is only defined for `UnionAbstractQuantity`.")
 Base.zero(::Type{T}) where {T<:UnionAbstractQuantity} = error("Cannot create an additive identity from `Type{<:$(Base.typename(T).wrapper)}`, as the dimensions are unknown. Please use `zero(::$(Base.typename(T).wrapper))` instead.")
 Base.zero(::Type{D}) where {D<:AbstractDimensions} = error("There is no such thing as an additive identity for `$(Base.typename(D).wrapper)`, as + is only defined for quantities.")
@@ -324,6 +337,11 @@ Base.oneunit(::Type{T}) where {T<:UnionAbstractQuantity} = error("Cannot create 
 Base.oneunit(::Type{D}) where {D<:AbstractDimensions} = error("There is no such thing as a dimensionful 1 for a `$(Base.typename(D).wrapper)` type, as + is only defined for quantities.")
 
 Base.float(::Type{Q}) where {T,D,Q<:UnionAbstractQuantity{T,D}} = with_type_parameters(Q, Base.float(T), D)
+
+# Base.real(::Type{T}) for scalar types uses `zero(T)` as a fallback for non-Real types.
+# For runtime-unit quantities, `zero(::Type{<:Quantity})` is intentionally undefined.
+# Treat quantities as real-valued scalars and return their underlying primitive type.
+Base.real(::Type{<:UnionAbstractQuantity{T}}) where {T} = T
 
 Base.show(io::IO, d::AbstractDimensions) =
     let tmp_io = IOBuffer()

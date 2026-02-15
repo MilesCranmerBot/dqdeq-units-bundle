@@ -16,31 +16,58 @@ function calc_tderivative!(integrator, cache, dtd1, repeat_step)
 
                 autodiff_alg = ADTypes.dense_ad(gpu_safe_autodiff(alg_autodiff(alg), u))
 
-                # Convert t to eltype(dT) if using ForwardDiff, to make FunctionWrappers work
-                t = autodiff_alg isa AutoForwardDiff ? convert(eltype(dT), t) : t
+                # If `t` isn't dual-able by ForwardDiff (e.g. some unitful scalar types),
+                # differentiate w.r.t. its underlying primitive value and rescale.
+                # This avoids constructing `Dual{...,t}`.
+                vt = SciMLBase.value(t)
+                is_forwarddiff_backend = autodiff_alg isa AutoForwardDiff ||
+                    (autodiff_alg isa DI.AutoForwardFromPrimitive && autodiff_alg.backend isa AutoForwardDiff)
 
-                grad_config_tup = cache.grad_config
-
-                if autodiff_alg isa AutoFiniteDiff
-                    grad_config = diffdir(integrator) > 0 ? grad_config_tup[1] :
-                        grad_config_tup[2]
-                else
-                    grad_config = grad_config_tup[1]
-                end
-
-                if integrator.iter == 1
-                    try
-                        DI.derivative!(
-                            tf, linsolve_tmp, dT, grad_config, autodiff_alg, t
-                        )
-                    catch e
-                        throw(FirstAutodiffTgradError(e))
+                # If `t` isn’t directly differentiable by the backend (ForwardDiff can’t dualize it,
+                # or FiniteDiff would mix dimensionless `relstep` with dimensionful `absstep` at t=0),
+                # differentiate w.r.t. the primitive value `vt = value(t)` and rescale.
+                if (is_forwarddiff_backend && !ForwardDiff.can_dual(typeof(t)) && vt isa Real) ||
+                        (autodiff_alg isa AutoFiniteDiff && vt isa Real && typeof(vt) != typeof(t))
+                    ut = oneunit(t)
+                    tf_scaled!(y, τ) = tf(y, τ * ut)
+                    if integrator.iter == 1
+                        try
+                            DI.derivative!(tf_scaled!, linsolve_tmp, dT, autodiff_alg, vt)
+                        catch e
+                            throw(FirstAutodiffTgradError(e))
+                        end
+                    else
+                        DI.derivative!(tf_scaled!, linsolve_tmp, dT, autodiff_alg, vt)
                     end
+                    dT ./= ut
+                    OrdinaryDiffEqCore.increment_nf!(integrator.stats, 1)
                 else
-                    DI.derivative!(tf, linsolve_tmp, dT, grad_config, autodiff_alg, t)
-                end
+                    # Convert t to eltype(dT) if using ForwardDiff, to make FunctionWrappers work
+                    t = autodiff_alg isa AutoForwardDiff ? convert(eltype(dT), t) : t
 
-                OrdinaryDiffEqCore.increment_nf!(integrator.stats, 1)
+                    grad_config_tup = cache.grad_config
+
+                    if autodiff_alg isa AutoFiniteDiff
+                        grad_config = diffdir(integrator) > 0 ? grad_config_tup[1] :
+                            grad_config_tup[2]
+                    else
+                        grad_config = grad_config_tup[1]
+                    end
+
+                    if integrator.iter == 1
+                        try
+                            DI.derivative!(
+                                tf, linsolve_tmp, dT, grad_config, autodiff_alg, t
+                            )
+                        catch e
+                            throw(FirstAutodiffTgradError(e))
+                        end
+                    else
+                        DI.derivative!(tf, linsolve_tmp, dT, grad_config, autodiff_alg, t)
+                    end
+
+                    OrdinaryDiffEqCore.increment_nf!(integrator.stats, 1)
+                end
             end
         end
 
@@ -65,14 +92,33 @@ function calc_tderivative(integrator, cache)
             autodiff_alg = SciMLBase.@set autodiff_alg.dir = diffdir(integrator)
         end
 
-        if integrator.iter == 1
-            try
-                dT = DI.derivative(tf, autodiff_alg, t)
-            catch e
-                throw(FirstAutodiffTgradError(e))
+        vt = SciMLBase.value(t)
+        is_forwarddiff_backend = autodiff_alg isa AutoForwardDiff ||
+            (autodiff_alg isa DI.AutoForwardFromPrimitive && autodiff_alg.backend isa AutoForwardDiff)
+
+        if (is_forwarddiff_backend && !ForwardDiff.can_dual(typeof(t)) && vt isa Real) ||
+                (autodiff_alg isa AutoFiniteDiff && vt isa Real && typeof(vt) != typeof(t))
+            ut = oneunit(t)
+            tf_scaled(τ) = tf(τ * ut)
+            if integrator.iter == 1
+                try
+                    dT = DI.derivative(tf_scaled, autodiff_alg, vt) ./ ut
+                catch e
+                    throw(FirstAutodiffTgradError(e))
+                end
+            else
+                dT = DI.derivative(tf_scaled, autodiff_alg, vt) ./ ut
             end
         else
-            dT = DI.derivative(tf, autodiff_alg, t)
+            if integrator.iter == 1
+                try
+                    dT = DI.derivative(tf, autodiff_alg, t)
+                catch e
+                    throw(FirstAutodiffTgradError(e))
+                end
+            else
+                dT = DI.derivative(tf, autodiff_alg, t)
+            end
         end
 
         OrdinaryDiffEqCore.increment_nf!(integrator.stats, 1)
