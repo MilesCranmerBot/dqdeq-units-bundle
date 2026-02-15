@@ -20,7 +20,7 @@ Construct the `i`-th standard basis array in the vector space of `a`.
 """
 function basis(a::AbstractArray, i)
     b = pre_basis(a)
-    b[i] = isempty(b) ? oneunit(eltype(b)) : oneunit(first(b))
+    b[i] = oneunit(first(b))
     return post_basis(b, a)
 end
 
@@ -37,7 +37,8 @@ Construct the sum of the `i`-th standard basis arrays in the vector space of `a`
 """
 function multibasis(a::AbstractArray, inds)
     b = pre_basis(a)
-    oneb = isempty(b) ? oneunit(eltype(b)) : oneunit(first(b))
+    isempty(b) && return post_basis(b, a)
+    oneb = oneunit(first(b))
     for i in inds
         b[i] = oneb
     end

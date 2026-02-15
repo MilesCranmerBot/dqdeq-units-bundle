@@ -341,7 +341,9 @@ Base.float(::Type{Q}) where {T,D,Q<:UnionAbstractQuantity{T,D}} = with_type_para
 # Base.real(::Type{T}) for scalar types uses `zero(T)` as a fallback for non-Real types.
 # For runtime-unit quantities, `zero(::Type{<:Quantity})` is intentionally undefined.
 # Treat quantities as real-valued scalars and return their underlying primitive type.
-Base.real(::Type{<:UnionAbstractQuantity{T}}) where {T} = T
+# Avoid ambiguity with Base.real(::Type{<:Real}) by not defining for RealQuantity.
+Base.real(::Type{<:AbstractQuantity{T}}) where {T} = real(T)
+Base.real(::Type{<:AbstractGenericQuantity{T}}) where {T} = real(T)
 
 Base.show(io::IO, d::AbstractDimensions) =
     let tmp_io = IOBuffer()
