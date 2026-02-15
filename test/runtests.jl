@@ -40,6 +40,12 @@ ustrip_unit(x, u) = x / u
 
         sol_ros = solve(prob, Rosenbrock23(); reltol=1e-10, abstol=1e-10)
         check_final(sol_ros; atol=2e-7, rtol=2e-7)
+
+        sol_trbdf2 = solve(prob, TRBDF2(); reltol=1e-10, abstol=1e-10)
+        check_final(sol_trbdf2; atol=3e-5, rtol=3e-5)
+
+        sol_kencarp = solve(prob, KenCarp4(); reltol=1e-10, abstol=1e-10)
+        check_final(sol_kencarp; atol=2e-7, rtol=2e-7)
     end
 
     @testset "scalar state" begin
