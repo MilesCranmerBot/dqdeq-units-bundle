@@ -278,7 +278,7 @@ function SciMLBase.__init(
                 real(
                     convert(
                         uBottomEltype,
-                        oneunit(uBottomEltype) *
+                        oneunit(first(u)) *
                             1 // 10^6
                     )
                 )
@@ -298,7 +298,7 @@ function SciMLBase.__init(
                 real(
                     convert(
                         uBottomEltype,
-                        oneunit(uBottomEltype) * 1 // 10^3
+                        oneunit(first(u)) * 1 // 10^3
                     )
                 )
             )
