@@ -639,7 +639,7 @@ function SciMLBase.__init(
     vector_event_last_time = 1
     last_event_error = prob isa SciMLBase.AbstractDiscreteProblem ? false :
         (
-            Base.isbitstype(uBottomEltypeNoUnits) ? zero(uBottomEltypeNoUnits) :
+            Base.isbitstype(uBottomEltypeNoUnits) ? zero(first(u)) :
             0.0
         )
     dtchangeable = isdtchangeable(_alg)
