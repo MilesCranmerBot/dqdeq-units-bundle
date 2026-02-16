@@ -427,10 +427,8 @@ function gpu_safe_autodiff(backend::AutoForwardDiff, u)
         if !ForwardDiff.can_dual(T)
             return AutoFiniteDiff()
         end
-        try
-            zero(T)
-            one(T)
-        catch
+        # Check if zero/one are defined for this type (DQ intentionally omits them)
+        if !(Base.hasmethod(zero, (Type{T},)) && Base.hasmethod(one, (Type{T},)))
             return AutoFiniteDiff()
         end
     end
