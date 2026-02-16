@@ -718,13 +718,8 @@ function build_J_W(
         elseif J isa StaticMatrix
             StaticWOperator(J, false)
         else
-            # Build a 1×1 prototype with the right *unit* for W (typically 1/time).
-            # This avoids ArrayInterface.qr/lu instance constructors which call
-            # `zero(T)`/`one(T)` on Quantity types (invalid for DynamicQuantities),
-            # and also ensures the cached W type is consistent for later updates.
-            Aproto = Matrix{eltype(J)}(undef, 1, 1)
-            Aproto[1] = inv(oneunit(t))
-            DiffEqBase.default_factorize(Aproto)
+            jacvec = JVPCache(f, copy(u), u, p, t, autodiff = alg_autodiff(alg))
+            WOperator{IIP}(f.mass_matrix, promote(t, dt)[2], J, _vec(u), jacvec)
         end
     end
     return J, W
