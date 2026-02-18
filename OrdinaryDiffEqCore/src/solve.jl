@@ -268,7 +268,7 @@ function SciMLBase.__init(
     uBottomEltypeNoUnits = recursive_unitless_bottom_eltype(u)
 
     uEltypeNoUnits = recursive_unitless_eltype(u)
-    tTypeNoUnits = typeof(one(tType))
+    tTypeNoUnits = typeof(unitfulvalue(oneunit(first(tspan))))
 
     if prob isa SciMLBase.AbstractDiscreteProblem
         abstol_internal = false
@@ -322,7 +322,7 @@ function SciMLBase.__init(
                 eltype(u) <: Enum
             rate_prototype = u
         else # has units!
-            rate_prototype = u / oneunit(tType)
+            rate_prototype = u / oneunit(first(tspan))
         end
     end
     rateType = typeof(rate_prototype) ## Can be different if united
@@ -628,7 +628,8 @@ function SciMLBase.__init(
     kshortsize = 0
     reeval_fsal = false
     u_modified = false
-    EEst = oneunit(EEstT) # https://github.com/JuliaPhysics/Measurements.jl/pull/135
+    # Avoid calling oneunit on a Quantity *type* (DynamicQuantities stores dimensions at runtime).
+    EEst = oneunit(internalnorm(u, t)) # https://github.com/JuliaPhysics/Measurements.jl/pull/135
     just_hit_tstop = false
     isout = false
     accept_step = false

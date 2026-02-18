@@ -11,7 +11,10 @@
     oneunit_tType = oneunit(t)
     dtmax_tdir = tdir * dtmax
 
-    dtmin = nextfloat(max(integrator.opts.dtmin, eps(t)))
+    # DynamicQuantities stores dimensions at runtime, so eps(t::Quantity) is undefined.
+    # Work in unitless space and then re-apply the time unit.
+    eps_t = eps(DiffEqBase.value(t) / DiffEqBase.value(oneunit_tType)) * oneunit_tType
+    dtmin = max(integrator.opts.dtmin, eps_t)
     smalldt = max(dtmin, convert(_tType, oneunit_tType * 1 // 10^(6)))
 
     if integrator.isdae
@@ -279,7 +282,10 @@ end
     oneunit_tType = oneunit(t)
     dtmax_tdir = tdir * dtmax
 
-    dtmin = nextfloat(max(integrator.opts.dtmin, eps(t)))
+    # DynamicQuantities stores dimensions at runtime, so eps(t::Quantity) is undefined.
+    # Work in unitless space and then re-apply the time unit.
+    eps_t = eps(DiffEqBase.value(t) / DiffEqBase.value(oneunit_tType)) * oneunit_tType
+    dtmin = max(integrator.opts.dtmin, eps_t)
     smalldt = max(dtmin, convert(_tType, oneunit_tType * 1 // 10^(6)))
 
     if integrator.isdae
