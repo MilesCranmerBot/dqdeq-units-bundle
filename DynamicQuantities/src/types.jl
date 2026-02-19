@@ -224,12 +224,6 @@ struct RealQuantity{T<:Real,D<:AbstractDimensions} <: AbstractRealQuantity{T,D}
     RealQuantity(x::_T, dimensions::_D) where {_T,_D<:AbstractDimensions} = new{_T,_D}(x, dimensions)
 end
 
-# If a quantity stores an array-like value, it behaves like a collection whose
-# element type is the corresponding scalar quantity.
-Base.eltype(::Type{Quantity{T,D}}) where {T<:AbstractArray, D} = Quantity{eltype(T), D}
-Base.eltype(::Type{GenericQuantity{T,D}}) where {T<:AbstractArray, D} = GenericQuantity{eltype(T), D}
-Base.eltype(::Type{RealQuantity{T,D}}) where {T<:AbstractArray, D} = RealQuantity{eltype(T), D}
-
 """
     ABSTRACT_QUANTITY_TYPES
 
