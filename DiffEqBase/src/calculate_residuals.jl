@@ -10,7 +10,7 @@ Calculate element-wise residuals
         ũ::Number, u₀::Number, u₁::Number,
         α, ρ, internalnorm, t
     )
-    ũ / (α + max(internalnorm(u₀, t), internalnorm(u₁, t)) * ρ)
+    @fastmath ũ / (α + max(internalnorm(u₀, t), internalnorm(u₁, t)) * ρ)
 end
 
 @inline function calculate_residuals(
@@ -41,7 +41,7 @@ Calculate element-wise residuals
         u₀::Number, u₁::Number,
         α, ρ, internalnorm, t
     )
-    (u₁ - u₀) / (α + max(internalnorm(u₀, t), internalnorm(u₁, t)) * ρ)
+    @fastmath (u₁ - u₀) / (α + max(internalnorm(u₀, t), internalnorm(u₁, t)) * ρ)
 end
 
 @inline function calculate_residuals(
@@ -70,7 +70,7 @@ Return element-wise residuals
         E₁::Number, E₂::Number, u₀::Number, u₁::Number,
         α::Real, ρ::Real, δ::Number, scalarnorm, t
     )
-    (δ * E₁ + E₂) / (α + max(scalarnorm(u₀, t), scalarnorm(u₁, t)) * ρ)
+    @fastmath (δ * E₁ + E₂) / (α + max(scalarnorm(u₀, t), scalarnorm(u₁, t)) * ρ)
 end
 
 @inline function calculate_residuals(
