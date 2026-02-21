@@ -21,10 +21,6 @@ DynamicQuantities = {path = "DynamicQuantities"}
 OrdinaryDiffEqCore = {path = "OrdinaryDiffEqCore"}
 OrdinaryDiffEqDifferentiation = {path = "OrdinaryDiffEqDifferentiation"}
 
-[compat]
-Measurements = "2.14.1"
-OrdinaryDiffEqTsit5 = "1.9.0"
-
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

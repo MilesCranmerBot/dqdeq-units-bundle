@@ -7,11 +7,15 @@ using LinearAlgebra
 import DiffEqBase: default_factorize
 
 # Support adaptive errors should be errorless for exponentiation
-value(::Type{<:UnionAbstractQuantity{T}}) where {T} = T
-value(x::UnionAbstractQuantity) = ustrip(x)
+for (_Q, _, _) in DynamicQuantities.ABSTRACT_QUANTITY_TYPES
+    @eval begin
+        value(::Type{<:$_Q{T}}) where {T} = T
+        value(x::$_Q) = ustrip(x)
 
-unitfulvalue(::Type{T}) where {T <: UnionAbstractQuantity} = T
-unitfulvalue(x::UnionAbstractQuantity) = x
+        unitfulvalue(::Type{T}) where {T<:$_Q} = T
+        unitfulvalue(x::$_Q) = x
+    end
+end
 
 @inline function DiffEqBase.ODE_DEFAULT_NORM(
         u::AbstractArray{<:UnionAbstractQuantity, N},
