@@ -17,23 +17,13 @@ unitfulvalue(x::UnionAbstractQuantity) = x
         u::AbstractArray{<:UnionAbstractQuantity, N},
         t,
     ) where {N}
-    return sqrt(
-        sum(
-            x -> DiffEqBase.ODE_DEFAULT_NORM(x[1], x[2]),
-            zip((value(x) for x in u), Iterators.repeated(t)),
-        ) / length(u),
-    )
+    return sqrt(sum(x -> DiffEqBase.ODE_DEFAULT_NORM(value(x), t), u) / length(u))
 end
 @inline function DiffEqBase.ODE_DEFAULT_NORM(
         u::Array{<:UnionAbstractQuantity, N},
         t,
     ) where {N}
-    return sqrt(
-        sum(
-            x -> DiffEqBase.ODE_DEFAULT_NORM(x[1], x[2]),
-            zip((value(x) for x in u), Iterators.repeated(t)),
-        ) / length(u),
-    )
+    return sqrt(sum(x -> DiffEqBase.ODE_DEFAULT_NORM(value(x), t), u) / length(u))
 end
 @inline DiffEqBase.ODE_DEFAULT_NORM(u::UnionAbstractQuantity, t) = abs(value(u))
 @inline function DiffEqBase.UNITLESS_ABS2(x::UnionAbstractQuantity)
