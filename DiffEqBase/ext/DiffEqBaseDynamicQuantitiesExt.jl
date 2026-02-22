@@ -21,13 +21,16 @@ end
         u::AbstractArray{<:UnionAbstractQuantity, N},
         t,
     ) where {N}
-    return sqrt(sum(x -> DiffEqBase.ODE_DEFAULT_NORM(value(x), t), u) / length(u))
+    # Match DiffEqBase's default array norm: RMS = sqrt(mean(abs2)).
+    len = max(length(u), 1)
+    return sqrt(sum(x -> abs2(value(x)), u) / len)
 end
 @inline function DiffEqBase.ODE_DEFAULT_NORM(
         u::Array{<:UnionAbstractQuantity, N},
         t,
     ) where {N}
-    return sqrt(sum(x -> DiffEqBase.ODE_DEFAULT_NORM(value(x), t), u) / length(u))
+    len = max(length(u), 1)
+    return sqrt(sum(x -> abs2(value(x)), u) / len)
 end
 @inline DiffEqBase.ODE_DEFAULT_NORM(u::UnionAbstractQuantity, t) = abs(value(u))
 @inline function DiffEqBase.UNITLESS_ABS2(x::UnionAbstractQuantity)
