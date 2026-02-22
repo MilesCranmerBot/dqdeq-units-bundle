@@ -718,7 +718,30 @@ function build_J_W(
         elseif J isa StaticMatrix
             StaticWOperator(J, false)
         else
-            ArrayInterface.lu_instance(J)
+            # For unitful eltypes (e.g. DynamicQuantities quantities), the downstream
+            # `calc_W` path uses `DiffEqBase.default_factorize(W)` which returns a
+            # wrapper factorization type. Seed the cache with the same factorization
+            # type to avoid type-instability / assignment conversion errors.
+            # Heuristic: DynamicQuantities quantity eltypes intentionally do not
+            # define `zero(::Type{<:Quantity})` (dimensions unknown at type-level).
+            # In that case, seed W using `default_factorize` so the cache type matches
+            # what `calc_W` will later produce.
+            unitful_eltype = try
+                zero(eltype(J))
+                false
+            catch
+                true
+            end
+            if unitful_eltype
+                # Seed an instance whose unit metadata matches the W/J matrices in
+                # Rosenbrock/SDIRK methods (units ~ 1/time). We only need the *type*
+                # here; the actual factorization is computed later in `calc_W`.
+                Aproto = Matrix{eltype(J)}(undef, 1, 1)
+                Aproto[1] = inv(oneunit(t))
+                DiffEqBase.default_factorize(Aproto)
+            else
+                ArrayInterface.lu_instance(J)
+            end
         end
     end
     return J, W
