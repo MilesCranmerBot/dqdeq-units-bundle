@@ -319,10 +319,13 @@ Base.zero(q::Q) where {Q<:UnionAbstractQuantity} = new_quantity(Q, zero(ustrip(q
 # `zero(eltype(x))`, which is intentionally undefined for DynamicQuantities.
 # Define a value-based array zero that preserves units.
 function Base.zero(x::AbstractArray{<:UnionAbstractQuantity})
-    isempty(x) && return similar(x)
-    z = zero(first(x))
+    # Additive identity must match each element's dimensions. Arrays of
+    # DynamicQuantities quantities may (in principle) hold mixed dimensions, so we
+    # cannot safely use `zero(first(x))` for all entries.
     out = similar(x)
-    fill!(out, z)
+    @inbounds for i in eachindex(x)
+        out[i] = zero(x[i])
+    end
     return out
 end
 
