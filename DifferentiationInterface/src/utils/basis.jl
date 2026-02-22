@@ -1,8 +1,14 @@
 function pre_basis(a::AbstractArray{T}) where {T}
     # Prefer value-based identities so scalar types without `zero(::Type{T})`
     # (e.g. runtime-unit quantities) can still participate.
-    isempty(a) && return similar(a)
-    return fill!(similar(a), zero(first(a)))
+    #
+    # Arrays may (in principle) contain mixed "units" (e.g. runtime-unit quantities
+    # or heterogeneous containers), so construct the zero array elementwise.
+    out = similar(a)
+    @inbounds for i in eachindex(a)
+        out[i] = zero(a[i])
+    end
+    return out
 end
 
 function post_basis(b::AbstractArray, a::AbstractArray)
@@ -20,7 +26,7 @@ Construct the `i`-th standard basis array in the vector space of `a`.
 """
 function basis(a::AbstractArray, i)
     b = pre_basis(a)
-    b[i] = oneunit(first(b))
+    b[i] = oneunit(a[i])
     return post_basis(b, a)
 end
 
@@ -38,9 +44,8 @@ Construct the sum of the `i`-th standard basis arrays in the vector space of `a`
 function multibasis(a::AbstractArray, inds)
     b = pre_basis(a)
     isempty(b) && return post_basis(b, a)
-    oneb = oneunit(first(b))
     for i in inds
-        b[i] = oneb
+        b[i] = oneunit(a[i])
     end
     return post_basis(b, a)
 end

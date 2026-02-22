@@ -27,6 +27,12 @@ using Dates
     t = [Time(1) - Time(0)]
     @test basis(t, 1) isa Vector{Nanosecond}
 
+    # Regression: basis should respect per-entry unit/type for heterogeneous arrays.
+    p = Period[Second(0), Millisecond(0)]
+    b = basis(p, 2)
+    @test b[1] == zero(p[1])
+    @test b[2] == oneunit(p[2])
+
     @test basis([1, 2]) == [0, 0]
     @test basis(Int[]) == Int[]
 end
