@@ -30,9 +30,17 @@ for (Qabs, _, _) in DynamicQuantities.ABSTRACT_QUANTITY_TYPES
         end
 
         function ArrayInterface.svd_instance(A::Matrix{T}) where {T<:$Qabs}
+            # `real(T)` tries to call `zero(::Type{T})` for some quantity types,
+            # which is intentionally undefined in DynamicQuantities.
+            isempty(A) && return LinearAlgebra.SVD(
+                Matrix{T}(undef, 0, 0),
+                Vector{Float64}(undef, 0),
+                Matrix{T}(undef, 0, 0),
+            )
+            noUnitT = typeof(zero(DynamicQuantities.ustrip(first(A))))
             return LinearAlgebra.SVD(
                 Matrix{T}(undef, 0, 0),
-                Vector{real(T)}(undef, 0),
+                Vector{noUnitT}(undef, 0),
                 Matrix{T}(undef, 0, 0),
             )
         end
@@ -45,7 +53,7 @@ for (Qabs, _, _) in DynamicQuantities.ABSTRACT_QUANTITY_TYPES
             luT = LinearAlgebra.lutype(noUnitT)
             ipiv = Vector{LinearAlgebra.BlasInt}(undef, 0)
             info = zero(LinearAlgebra.BlasInt)
-            return LinearAlgebra.LU{luT}(similar(A, 0, 0), ipiv, info)
+            return LinearAlgebra.LU{luT}(Matrix{luT}(undef, 0, 0), ipiv, info)
         end
     end
 end

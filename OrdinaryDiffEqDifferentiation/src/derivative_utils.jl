@@ -718,8 +718,7 @@ function build_J_W(
         elseif J isa StaticMatrix
             StaticWOperator(J, false)
         else
-            jacvec = JVPCache(f, copy(u), u, p, t, autodiff = alg_autodiff(alg))
-            WOperator{IIP}(f.mass_matrix, promote(t, dt)[2], J, _vec(u), jacvec)
+            ArrayInterface.lu_instance(J)
         end
     end
     return J, W
