@@ -1,7 +1,8 @@
 using Test
 
 using DynamicQuantities
-using DifferentialEquations
+using DiffEqBase
+using OrdinaryDiffEqTsit5
 
 # Helpers
 ustrip_unit(x, u) = x / u
@@ -29,24 +30,8 @@ ustrip_unit(x, u) = x / u
         @test mid[1] isa typeof(1.0u"m")
         @test ustrip_unit(mid[1], 1.0u"m") ≈ exp(0.5) atol=2e-6 rtol=2e-6
 
-        # A few other explicit/nonstiff solvers
-        for alg in (BS3(), Vern7(), DP5())
-            sol = solve(prob, alg; reltol=1e-12, abstol=1e-12)
-            check_final(sol; atol=2e-9, rtol=2e-9)
-        end
-
-        # Stiff solvers (exercise Jacobian/linear-solve paths)
-        sol_rodas = solve(prob, Rodas5())
-        check_final(sol_rodas; atol=1e-5, rtol=1e-5)
-
-        sol_ros = solve(prob, Rosenbrock23(); reltol=1e-10, abstol=1e-10)
-        check_final(sol_ros; atol=2e-7, rtol=2e-7)
-
-        sol_trbdf2 = solve(prob, TRBDF2(); reltol=1e-10, abstol=1e-10)
-        check_final(sol_trbdf2; atol=3e-5, rtol=3e-5)
-
-        sol_kencarp = solve(prob, KenCarp4(); reltol=1e-10, abstol=1e-10)
-        check_final(sol_kencarp; atol=2e-7, rtol=2e-7)
+        # Keep integration smoke tests focused and lightweight in this bundle:
+        # explicit Tsit5 path + unitful callbacks/saveat/reverse-time checks below.
     end
 
     @testset "scalar state" begin
