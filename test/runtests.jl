@@ -3,6 +3,7 @@ using Test
 using DynamicQuantities
 using DiffEqBase
 using OrdinaryDiffEqTsit5
+using LinearAlgebra
 
 # Helpers
 ustrip_unit(x, u) = x / u
@@ -90,5 +91,28 @@ ustrip_unit(x, u) = x / u
         @test hits[] == 1
         @test sol.t == [0.0u"s", 0.5u"s", 1.0u"s"]
         @test ustrip_unit(sol.u[end], 1.0u"m") ≈ exp(1) atol=1e-6 rtol=1e-6
+    end
+
+    @testset "unitful default_factorize linear solve (stiff-path surrogate)" begin
+        # First entry is zero to guard against first-element unit assumptions.
+        A = [0.0u"s^-1" 1.0u"s^-1"; -2.0u"s^-1" 3.0u"s^-1"]
+        b = [3.0u"m/s", 4.0u"m/s"]
+
+        W = DiffEqBase.default_factorize(A)
+        x = W \ b
+
+        @test x isa Vector
+        @test eltype(x) <: typeof(1.0u"m")
+
+        # Check Ax ≈ b in unitless space (same physical units on both sides).
+        Ax = A * x
+        @test ustrip_unit(Ax[1], 1.0u"m/s") ≈ ustrip_unit(b[1], 1.0u"m/s") atol=1e-12 rtol=1e-12
+        @test ustrip_unit(Ax[2], 1.0u"m/s") ≈ ustrip_unit(b[2], 1.0u"m/s") atol=1e-12 rtol=1e-12
+
+        # Also exercise the ldiv! path used by Rosenbrock/SDIRK internals.
+        y = similar(b)
+        LinearAlgebra.ldiv!(y, W, b)
+        @test ustrip_unit(y[1], 1.0u"m") ≈ ustrip_unit(x[1], 1.0u"m") atol=1e-12 rtol=1e-12
+        @test ustrip_unit(y[2], 1.0u"m") ≈ ustrip_unit(x[2], 1.0u"m") atol=1e-12 rtol=1e-12
     end
 end
