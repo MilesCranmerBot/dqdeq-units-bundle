@@ -270,19 +270,15 @@ function SciMLBase.__init(
     uEltypeNoUnits = recursive_unitless_eltype(u)
     tTypeNoUnits = typeof(unitfulvalue(oneunit(first(tspan))))
 
+    scalar_type_tol =
+        uBottomEltypeNoUnits == uBottomEltype &&
+        uBottomEltype <: Union{Real,Complex}
+
     if prob isa SciMLBase.AbstractDiscreteProblem
         abstol_internal = false
     elseif abstol === nothing
-        if uBottomEltypeNoUnits == uBottomEltype
-            abstol_internal = unitfulvalue(
-                real(
-                    convert(
-                        uBottomEltype,
-                        oneunit(first(u)) *
-                            1 // 10^6
-                    )
-                )
-            )
+        if scalar_type_tol
+            abstol_internal = unitfulvalue(real(convert(uBottomEltype, oneunit(uBottomEltype) * 1 // 10^6)))
         else
             abstol_internal = unitfulvalue.(real.(oneunit.(u) .* 1 // 10^6))
         end
@@ -293,15 +289,8 @@ function SciMLBase.__init(
     if prob isa SciMLBase.AbstractDiscreteProblem
         reltol_internal = false
     elseif reltol === nothing
-        if uBottomEltypeNoUnits == uBottomEltype
-            reltol_internal = unitfulvalue(
-                real(
-                    convert(
-                        uBottomEltype,
-                        oneunit(first(u)) * 1 // 10^3
-                    )
-                )
-            )
+        if scalar_type_tol
+            reltol_internal = unitfulvalue(real(convert(uBottomEltype, oneunit(uBottomEltype) * 1 // 10^3)))
         else
             reltol_internal = unitfulvalue.(real.(oneunit.(u) .* 1 // 10^3))
         end

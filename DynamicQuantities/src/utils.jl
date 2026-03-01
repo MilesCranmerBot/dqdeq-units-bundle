@@ -315,19 +315,11 @@ Base.one(::D) where {D<:AbstractDimensions} = one(D)
 # Additive identities (zero). We have to invalidate these due to different behavior with conversion
 Base.zero(q::Q) where {Q<:UnionAbstractQuantity} = new_quantity(Q, zero(ustrip(q)), dimension(q))
 
-# For arrays of runtime-unit quantities, `Base.zero(x::AbstractArray)` falls back to
-# `zero(eltype(x))`, which is intentionally undefined for DynamicQuantities.
-# Define a value-based array zero that preserves units.
-function Base.zero(x::AbstractArray{<:UnionAbstractQuantity})
-    # Additive identity must match each element's dimensions. Arrays of
-    # DynamicQuantities quantities may (in principle) hold mixed dimensions, so we
-    # cannot safely use `zero(first(x))` for all entries.
-    out = similar(x)
-    @inbounds for i in eachindex(x)
-        out[i] = zero(x[i])
-    end
-    return out
+# `zero(eltype(x))` is undefined for runtime-unit quantities.
+for (Qabs, _, _) in ABSTRACT_QUANTITY_TYPES
+    @eval Base.zero(x::Array{<:$Qabs}) = zero.(x)
 end
+Base.zero(x::Array{<:UnionAbstractQuantity}) = zero.(x)
 
 Base.zero(::AbstractDimensions) = error("There is no such thing as an additive identity for a `AbstractDimensions` object, as + is only defined for `UnionAbstractQuantity`.")
 Base.zero(::Type{T}) where {T<:UnionAbstractQuantity} = error("Cannot create an additive identity from `Type{<:$(Base.typename(T).wrapper)}`, as the dimensions are unknown. Please use `zero(::$(Base.typename(T).wrapper))` instead.")

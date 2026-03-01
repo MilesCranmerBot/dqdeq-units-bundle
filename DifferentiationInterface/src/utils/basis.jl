@@ -1,15 +1,4 @@
-function pre_basis(a::AbstractArray{T}) where {T}
-    # Prefer value-based identities so scalar types without `zero(::Type{T})`
-    # (e.g. runtime-unit quantities) can still participate.
-    #
-    # Arrays may (in principle) contain mixed "units" (e.g. runtime-unit quantities
-    # or heterogeneous containers), so construct the zero array elementwise.
-    out = similar(a)
-    @inbounds for i in eachindex(a)
-        out[i] = zero(a[i])
-    end
-    return out
-end
+pre_basis(a::AbstractArray{T}) where {T} = zero.(a)
 
 function post_basis(b::AbstractArray, a::AbstractArray)
     if ismutable_array(a)
