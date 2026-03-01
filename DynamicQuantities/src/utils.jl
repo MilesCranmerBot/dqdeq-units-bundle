@@ -316,10 +316,17 @@ Base.one(::D) where {D<:AbstractDimensions} = one(D)
 Base.zero(q::Q) where {Q<:UnionAbstractQuantity} = new_quantity(Q, zero(ustrip(q)), dimension(q))
 
 # `zero(eltype(x))` is undefined for runtime-unit quantities.
-for (Qabs, _, _) in ABSTRACT_QUANTITY_TYPES
-    @eval Base.zero(x::Array{<:$Qabs}) = zero.(x)
+@inline function _zero_quantity_array(x::Array)
+    out = similar(x)
+    @inbounds for i in eachindex(x)
+        out[i] = zero(x[i])
+    end
+    return out
 end
-Base.zero(x::Array{<:UnionAbstractQuantity}) = zero.(x)
+for (Qabs, _, _) in ABSTRACT_QUANTITY_TYPES
+    @eval Base.zero(x::Array{<:$Qabs}) = _zero_quantity_array(x)
+end
+Base.zero(x::Array{<:UnionAbstractQuantity}) = _zero_quantity_array(x)
 
 Base.zero(::AbstractDimensions) = error("There is no such thing as an additive identity for a `AbstractDimensions` object, as + is only defined for `UnionAbstractQuantity`.")
 Base.zero(::Type{T}) where {T<:UnionAbstractQuantity} = error("Cannot create an additive identity from `Type{<:$(Base.typename(T).wrapper)}`, as the dimensions are unknown. Please use `zero(::$(Base.typename(T).wrapper))` instead.")
