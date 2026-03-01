@@ -94,12 +94,6 @@ as it will also include future abstract quantity types.
 """
 const UnionAbstractQuantity{T,D} = Union{AbstractQuantity{T,D},AbstractGenericQuantity{T,D},AbstractRealQuantity{T,D}}
 
-# Quantities act like scalar Numbers when their stored value is scalar, but can also
-# behave like collections when the stored value is array-like (see iterate/axes/etc
-# in utils.jl). Define `eltype` accordingly.
-Base.eltype(::Type{Q}) where {Q<:UnionAbstractQuantity} = Q
-Base.eltype(x::UnionAbstractQuantity) = eltype(typeof(x))
-
 """
     Dimensions{R<:Real} <: AbstractDimensions{R}
 
@@ -223,12 +217,6 @@ struct RealQuantity{T<:Real,D<:AbstractDimensions} <: AbstractRealQuantity{T,D}
 
     RealQuantity(x::_T, dimensions::_D) where {_T,_D<:AbstractDimensions} = new{_T,_D}(x, dimensions)
 end
-
-# If a quantity stores an array-like value, it behaves like a collection whose
-# element type is the corresponding scalar quantity.
-Base.eltype(::Type{Quantity{T,D}}) where {T<:AbstractArray, D} = Quantity{eltype(T), D}
-Base.eltype(::Type{GenericQuantity{T,D}}) where {T<:AbstractArray, D} = GenericQuantity{eltype(T), D}
-Base.eltype(::Type{RealQuantity{T,D}}) where {T<:AbstractArray, D} = RealQuantity{eltype(T), D}
 
 """
     ABSTRACT_QUANTITY_TYPES
