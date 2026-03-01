@@ -341,11 +341,11 @@ Base.oneunit(::Type{D}) where {D<:AbstractDimensions} = error("There is no such 
 Base.float(::Type{Q}) where {T,D,Q<:UnionAbstractQuantity{T,D}} = with_type_parameters(Q, Base.float(T), D)
 
 # Base.real(::Type{T}) for scalar types can fallback to `zero(T)` for non-Real types.
-# For runtime-unit quantities, `zero(::Type{<:Quantity})` is intentionally undefined.
-# Match Unitful semantics: `real(typeof(q))` should return the quantity type itself.
-# Avoid ambiguity with Base.real(::Type{<:Real}) by not defining for RealQuantity.
-Base.real(::Type{Q}) where {Q<:AbstractQuantity} = Q
-Base.real(::Type{Q}) where {Q<:AbstractGenericQuantity} = Q
+# For runtime-unit quantities, `zero(::Type{<:Quantity})` is intentionally undefined,
+# so Base's fallback would error. Match Unitful semantics by mapping through the
+# stored value type instead.
+Base.real(::Type{Q}) where {T<:Number,D,Q<:AbstractQuantity{T,D}} = with_type_parameters(Q, real(T), D)
+Base.real(::Type{Q}) where {T<:Number,D,Q<:AbstractGenericQuantity{T,D}} = with_type_parameters(Q, real(T), D)
 
 Base.show(io::IO, d::AbstractDimensions) =
     let tmp_io = IOBuffer()
