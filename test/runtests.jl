@@ -2,6 +2,7 @@ using Test
 
 using DynamicQuantities
 using DiffEqBase
+using OrdinaryDiffEqCore
 using OrdinaryDiffEqTsit5
 using LinearAlgebra
 
@@ -9,6 +10,14 @@ using LinearAlgebra
 ustrip_unit(x, u) = x / u
 
 @testset "DynamicQuantities × DifferentialEquations: unitful ODEs" begin
+    @testset "RAT recursive_unitless_* peels DQ wrapper" begin
+        u = [1.0u"m", 2.0u"m"]
+        @test OrdinaryDiffEqCore.recursive_unitless_bottom_eltype(typeof(u)) == Float64
+        @test OrdinaryDiffEqCore.recursive_unitless_eltype(typeof(u)) == Vector{Float64}
+        @test OrdinaryDiffEqCore.recursive_unitless_bottom_eltype(u) == Float64
+        @test OrdinaryDiffEqCore.recursive_unitless_eltype(u) == Float64
+    end
+
     @testset "out-of-place vector state" begin
         u0 = [1.0u"m", 2.0u"m"]
         tspan = (0.0u"s", 1.0u"s")
