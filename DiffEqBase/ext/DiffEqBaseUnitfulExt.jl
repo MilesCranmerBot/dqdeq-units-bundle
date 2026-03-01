@@ -18,16 +18,23 @@ unitfulvalue(x::Unitful.AbstractQuantity) = x
         },
         t
     ) where {N}
-    # Match DiffEqBase's default array norm: RMS = sqrt(mean(abs2)).
-    len = max(length(u), 1)
-    return sqrt(sum(x -> abs2(value(x)), u) / len)
+    return sqrt(
+        sum(
+            x -> DiffEqBase.ODE_DEFAULT_NORM(x[1], x[2]),
+            zip((value(x) for x in u), Iterators.repeated(t))
+        ) / length(u)
+    )
 end
 @inline function DiffEqBase.ODE_DEFAULT_NORM(
         u::Array{<:Unitful.AbstractQuantity, N},
         t
     ) where {N}
-    len = max(length(u), 1)
-    return sqrt(sum(x -> abs2(value(x)), u) / len)
+    return sqrt(
+        sum(
+            x -> DiffEqBase.ODE_DEFAULT_NORM(x[1], x[2]),
+            zip((value(x) for x in u), Iterators.repeated(t))
+        ) / length(u)
+    )
 end
 @inline DiffEqBase.ODE_DEFAULT_NORM(u::Unitful.AbstractQuantity, t) = abs(value(u))
 @inline function DiffEqBase.UNITLESS_ABS2(x::Unitful.AbstractQuantity)
