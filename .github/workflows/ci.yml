@@ -16,7 +16,7 @@ jobs:
           - ArrayInterface
           - DynamicQuantities
           - DiffEqBase
-          # - DifferentiationInterface  # temporarily disabled to skip expensive matrix tests
+          - DifferentiationInterface
           - OrdinaryDiffEqCore
           - OrdinaryDiffEqDifferentiation
 
