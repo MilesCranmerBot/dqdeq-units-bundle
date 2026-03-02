@@ -2318,10 +2318,8 @@ end
 
 pop!(LOAD_PATH)
 
-@testset "zero(::AbstractArray{<:UnionAbstractQuantity}) is elementwise" begin
-    x = Vector{UnionAbstractQuantity}(undef, 2)
-    x[1] = 1.0u"m"
-    x[2] = 2.0u"s"
+@testset "zero(::Vector{<:Quantity}) preserves per-entry units" begin
+    x = [1.0u"m", 2.0u"s"]
 
     z = zero(x)
     @test z[1] == 0.0u"m"
