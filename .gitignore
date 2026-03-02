@@ -1,0 +1,13 @@
+# Julia
+Manifest.toml
+*.ji
+*.so
+*.dylib
+*.dll
+
+# local depots / temp
+.julia*
+
+# editors
+.DS_Store
+.vscode/

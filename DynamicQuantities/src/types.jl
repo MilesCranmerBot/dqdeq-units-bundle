@@ -74,6 +74,8 @@ _as well as any other future abstract quantity types_,
 """
 abstract type AbstractGenericQuantity{T,D} end
 
+using DispatchDoctor: @unstable
+
 """
     AbstractRealQuantity{T,D} <: Real
 
@@ -294,7 +296,7 @@ function with_type_parameters(::Type{<:RealQuantity}, ::Type{T}, ::Type{D}) wher
 end
 
 # The following functions should be overloaded for special types
-function constructorof(::Type{T}) where {T<:Union{UnionAbstractQuantity,AbstractDimensions}}
+@unstable function constructorof(::Type{T}) where {T<:Union{UnionAbstractQuantity,AbstractDimensions}}
     return Base.typename(T).wrapper
 end
 function with_type_parameters(::Type{D}, ::Type{R}) where {D<:AbstractDimensions,R}

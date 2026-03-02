@@ -41,8 +41,10 @@ function SciMLBase.__init(
         calck = (callback !== nothing && callback !== CallbackSet()) ||
             (dense) || !isempty(saveat), # and no dense output
         dt = nothing,
-        dtmin = eltype(prob.tspan)(0),
-        dtmax = eltype(prob.tspan)((prob.tspan[end] - prob.tspan[1])),
+        # For runtime-unit quantities (DynamicQuantities), eltype(prob.tspan)(0) would
+        # drop units; use a value-based zero to preserve units.
+        dtmin = zero(prob.tspan[1]),
+        dtmax = (prob.tspan[end] - prob.tspan[1]),
         force_dtmin = false,
         adaptive = anyadaptive(alg),
         abstol = nothing,
@@ -266,21 +268,17 @@ function SciMLBase.__init(
     uBottomEltypeNoUnits = recursive_unitless_bottom_eltype(u)
 
     uEltypeNoUnits = recursive_unitless_eltype(u)
-    tTypeNoUnits = typeof(one(tType))
+    tTypeNoUnits = typeof(unitfulvalue(oneunit(first(tspan))))
+
+    scalar_type_tol =
+        uBottomEltypeNoUnits == uBottomEltype &&
+        uBottomEltype <: Union{Real,Complex}
 
     if prob isa SciMLBase.AbstractDiscreteProblem
         abstol_internal = false
     elseif abstol === nothing
-        if uBottomEltypeNoUnits == uBottomEltype
-            abstol_internal = unitfulvalue(
-                real(
-                    convert(
-                        uBottomEltype,
-                        oneunit(uBottomEltype) *
-                            1 // 10^6
-                    )
-                )
-            )
+        if scalar_type_tol
+            abstol_internal = unitfulvalue(real(convert(uBottomEltype, oneunit(uBottomEltype) * 1 // 10^6)))
         else
             abstol_internal = unitfulvalue.(real.(oneunit.(u) .* 1 // 10^6))
         end
@@ -291,15 +289,8 @@ function SciMLBase.__init(
     if prob isa SciMLBase.AbstractDiscreteProblem
         reltol_internal = false
     elseif reltol === nothing
-        if uBottomEltypeNoUnits == uBottomEltype
-            reltol_internal = unitfulvalue(
-                real(
-                    convert(
-                        uBottomEltype,
-                        oneunit(uBottomEltype) * 1 // 10^3
-                    )
-                )
-            )
+        if scalar_type_tol
+            reltol_internal = unitfulvalue(real(convert(uBottomEltype, oneunit(uBottomEltype) * 1 // 10^3)))
         else
             reltol_internal = unitfulvalue.(real.(oneunit.(u) .* 1 // 10^3))
         end
@@ -320,7 +311,7 @@ function SciMLBase.__init(
                 eltype(u) <: Enum
             rate_prototype = u
         else # has units!
-            rate_prototype = u / oneunit(tType)
+            rate_prototype = u / oneunit(first(tspan))
         end
     end
     rateType = typeof(rate_prototype) ## Can be different if united
@@ -626,7 +617,8 @@ function SciMLBase.__init(
     kshortsize = 0
     reeval_fsal = false
     u_modified = false
-    EEst = oneunit(EEstT) # https://github.com/JuliaPhysics/Measurements.jl/pull/135
+    # Avoid calling oneunit on a Quantity *type* (DynamicQuantities stores dimensions at runtime).
+    EEst = oneunit(internalnorm(u, t)) # https://github.com/JuliaPhysics/Measurements.jl/pull/135
     just_hit_tstop = false
     isout = false
     accept_step = false
