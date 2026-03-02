@@ -419,20 +419,6 @@ Automatically wrap AutoForwardDiff with AutoForwardFromPrimitive for GPU arrays
 that don't support fast scalar indexing (e.g., GPU arrays).
 """
 function gpu_safe_autodiff(backend::AutoForwardDiff, u)
-    # Some scalar-like types (e.g. runtime-unit quantities) cannot be dualized by
-    # ForwardDiff (and/or intentionally do not define `zero(T)`/`one(T)` at the type
-    # level). In those cases, fall back to finite differencing.
-    T = eltype(u)
-    if T !== Any
-        if !ForwardDiff.can_dual(T)
-            return AutoFiniteDiff()
-        end
-        # Check if zero/one are defined for this type (DQ intentionally omits them)
-        if !(Base.hasmethod(zero, (Type{T},)) && Base.hasmethod(one, (Type{T},)))
-            return AutoFiniteDiff()
-        end
-    end
-
     if ArrayInterface.fast_scalar_indexing(u)
         # CPU arrays with fast scalar indexing - use original backend
         return backend
