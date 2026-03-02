@@ -326,7 +326,7 @@ end
 for (Qabs, _, _) in ABSTRACT_QUANTITY_TYPES
     @eval Base.zero(x::Array{<:$Qabs}) = _zero_quantity_array(x)
 end
-Base.zero(x::Array{<:UnionAbstractQuantity}) = _zero_quantity_array(x)
+Base.zero(x::Array{UnionAbstractQuantity}) = _zero_quantity_array(x)
 
 Base.zero(::AbstractDimensions) = error("There is no such thing as an additive identity for a `AbstractDimensions` object, as + is only defined for `UnionAbstractQuantity`.")
 Base.zero(::Type{T}) where {T<:UnionAbstractQuantity} = error("Cannot create an additive identity from `Type{<:$(Base.typename(T).wrapper)}`, as the dimensions are unknown. Please use `zero(::$(Base.typename(T).wrapper))` instead.")
